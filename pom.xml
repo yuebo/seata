@@ -21,7 +21,7 @@
 
     <groupId>io.seata</groupId>
     <artifactId>seata-parent</artifactId>
-    <version>${revision}</version>
+    <version>0.6.0</version>
     <modules>
         <module>all</module>
         <module>bom</module>

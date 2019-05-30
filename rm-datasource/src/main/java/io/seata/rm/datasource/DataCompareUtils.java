@@ -21,12 +21,17 @@ import io.seata.rm.datasource.sql.struct.Field;
 import io.seata.rm.datasource.sql.struct.Row;
 import io.seata.rm.datasource.sql.struct.TableMeta;
 import io.seata.rm.datasource.sql.struct.TableRecords;
+import org.apache.commons.lang.time.DateFormatUtils;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.alibaba.fastjson.JSON.DEFFAULT_DATE_FORMAT;
 
 /**
  * The type Data compare utils.
@@ -57,15 +62,25 @@ public class DataCompareUtils {
                         if (f1.getValue() == null) {
                             return false;
                         } else {
-                            int f0Type = f0.getType();
-                            int f1Type = f1.getType();
-                            if (f0Type == Types.TIMESTAMP && f0.getValue().getClass().equals(String.class)) {
-                                f0.setValue(Timestamp.valueOf(f0.getValue().toString()));
+                            Object value0=f0.getValue();
+                            Object value1=f1.getValue();
+                            //格式化比较，数字格式化成BigDecimal
+                            if(value0 instanceof Number&&value1 instanceof Number){
+                                BigDecimal d1=new BigDecimal(value0.toString());
+                                BigDecimal d2=new BigDecimal(value1.toString());
+                                return d1.equals(d2);
                             }
-                            if (f1Type == Types.TIMESTAMP && f1.getValue().getClass().equals(String.class)) {
-                                f1.setValue(Timestamp.valueOf(f1.getValue().toString()));
+                            //根据序列化策略，如果时间格式序列化成long
+                            if(value0 instanceof Number && value1 instanceof Date){
+                                BigDecimal d1=new BigDecimal(value0.toString());
+                                return d1.longValue() == ((Date) value1).getTime();
                             }
-                            return f0.getValue().equals(f1.getValue());
+                            //根据序列化策略，如果时间格式序列化成String
+                            if(value0 instanceof String && value1 instanceof Date){
+                                String dateStr=DateFormatUtils.format((Date)value1,DEFFAULT_DATE_FORMAT);
+                                return value0.equals(dateStr);
+                            }
+                            return value0.equals(value1);
                         }
                     }
                 } else {
